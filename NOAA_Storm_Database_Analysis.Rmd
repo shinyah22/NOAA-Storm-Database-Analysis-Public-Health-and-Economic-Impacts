@@ -101,7 +101,8 @@ top_economic_events <- head(economic_impact_per_event, 10)
 ## Results
 This section presents the main results of the analysis, including figures and tables that summarize our findings.
 
-```{r results, message=FALSE}
+Question 1: Which types of events are most harmful with respect to population health?
+```{r results-1, message=FALSE}
 
 # Plotting the results
 ggplot(top_events, aes(x = reorder(EVTYPE, -TotalImpact), y = TotalImpact)) +
@@ -111,7 +112,11 @@ ggplot(top_events, aes(x = reorder(EVTYPE, -TotalImpact), y = TotalImpact)) +
        x = "Event Type",
        y = "Total Health Impact (Fatalities + Injuries)") +
   coord_flip() # for horizontal bars
+```
+Tornadoes are the most detrimental with respect to population health.
 
+Question 2: Which types of events have the greatest economic consequences?
+```{r results-2, message=FALSE}
 # Plotting the results
 ggplot(top_economic_events, aes(x = reorder(EVTYPE, -TotalEconomicImpact), y = TotalEconomicImpact)) +
   geom_bar(stat = "identity", fill = "steelblue") +
@@ -122,3 +127,4 @@ ggplot(top_economic_events, aes(x = reorder(EVTYPE, -TotalEconomicImpact), y = T
   coord_flip() # for horizontal bars
 
 ```
+Flood has the greatest economic impact.
