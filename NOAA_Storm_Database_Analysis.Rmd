@@ -5,9 +5,9 @@ date: "2024-01-21"
 output: html_document
 ---
 
-## Introduction
+## Synopsis
 
-Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database to track the characteristics of major storms and weather events in the United States.
+This analysis aims to identify the types of weather events that have the most significant impact on public health and the economy in the United States. By examining the NOAA storm database, we assess the overall impact of various weather events in terms of fatalities, injuries, and economic damages.
 
 ## Data
 
