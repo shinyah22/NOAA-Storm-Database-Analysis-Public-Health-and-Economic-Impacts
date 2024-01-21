@@ -1,0 +1,124 @@
+---
+title: 'NOAA Storm Database Analysis: Public Health and Economic Impacts'
+author: "Shinya Hashimoto"
+date: "2024-01-21"
+output: html_document
+---
+
+## Introduction
+
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database to track the characteristics of major storms and weather events in the United States.
+
+## Data
+
+The data for this assignment come in the form of a compressed CSV file via the bzip2 algorithm. The file can be downloaded from the course web site.
+
+## Load Data
+```{r load-data, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+data <- read.csv("repdata_data_StormData.csv.bz2")
+```
+
+## Data Overview
+```{r data-overview, message=FALSE}
+head(data)
+```
+
+## Data Processing
+In this section, we process the data to prepare it for analysis. This includes cleaning the data, handling missing values, and transforming variables as necessary.
+```{r data-processing}
+# Removing unnecessary columns
+data_clean <- data %>%
+  select(-c(BGN_RANGE, BGN_AZI, BGN_LOCATI, END_DATE, END_TIME, COUNTY_END, COUNTYENDN, END_RANGE, END_AZI, END_LOCATI, WFO, STATEOFFIC, ZONENAMES, LATITUDE_E, LONGITUDE_, REMARKS))
+
+# Converting data types
+data_clean$BGN_DATE <- as.Date(data_clean$BGN_DATE, format="%m/%d/%Y %H:%M:%S")
+data_clean$FATALITIES <- as.numeric(data_clean$FATALITIES)
+data_clean$INJURIES <- as.numeric(data_clean$INJURIES)
+data_clean$PROPDMG <- as.numeric(data_clean$PROPDMG)
+data_clean$CROPDMG <- as.numeric(data_clean$CROPDMG)
+
+# Handling missing values
+data_clean <- na.omit(data_clean)
+```
+
+## Analysis
+
+## Question 1: Which types of events are most harmful with respect to population health?
+We analyze the data to determine which weather events have the most significant impact on public health, measured by the number of fatalities and injurie
+```{r analysis-question-1-health-impact}
+data_clean <- data %>%
+  filter(!is.na(FATALITIES), !is.na(INJURIES)) %>%
+  mutate(TotalHealthImpact = FATALITIES + INJURIES)
+
+# Aggregate data to find total health impact per event type
+health_impact_per_event <- data_clean %>%
+  group_by(EVTYPE) %>%
+  summarize(TotalImpact = sum(TotalHealthImpact, na.rm = TRUE)) %>%
+  arrange(desc(TotalImpact))
+
+# Top 10 most harmful events for population health
+top_events <- head(health_impact_per_event, 10)
+
+```
+
+## Question 2: Which types of events have the greatest economic consequences?
+This part of the analysis focuses on assessing the economic impact of different weather events, considering property and crop damages.
+
+```{r analysis-question-2-economic-impact}
+# Function to convert strings in PROPDMGEXP column to numeric values
+convert_exp <- function(exp) {
+  exp <- as.character(exp)
+  exp[exp == "K"] <- 3  # Convert "K" representing thousands to 10^3
+  exp[exp == "M"] <- 6  # Convert "M" representing millions to 10^6
+  exp[exp == "B"] <- 9  # Convert "B" representing billions to 10^9
+  exp[exp == ""] <- 0   # Treat empty strings as 10^0
+  as.numeric(exp)       # Convert strings to numeric values
+}
+
+# Convert PROPDMGEXP column to numeric values
+data$PROPDMGEXP <- convert_exp(data$PROPDMGEXP)
+
+# Apply the same process to CROPDMGEXP column if it exists
+data$CROPDMGEXP <- convert_exp(data$CROPDMGEXP)
+
+# Calculate economic loss
+data_clean <- data %>%
+  mutate(TotalEconomicImpact = (PROPDMG * 10 ^ PROPDMGEXP) + (CROPDMG * 10 ^ CROPDMGEXP))
+
+# Aggregate data to find total economic impact per event type
+economic_impact_per_event <- data_clean %>%
+  group_by(EVTYPE) %>%
+  summarize(TotalEconomicImpact = sum(TotalEconomicImpact, na.rm = TRUE)) %>%
+  arrange(desc(TotalEconomicImpact))
+
+# Identify top 10 events with the greatest economic impact
+top_economic_events <- head(economic_impact_per_event, 10)
+
+```
+
+## Results
+This section presents the main results of the analysis, including figures and tables that summarize our findings.
+
+```{r results, message=FALSE}
+
+# Plotting the results
+ggplot(top_events, aes(x = reorder(EVTYPE, -TotalImpact), y = TotalImpact)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Top 10 Most Harmful Events for Population Health",
+       x = "Event Type",
+       y = "Total Health Impact (Fatalities + Injuries)") +
+  coord_flip() # for horizontal bars
+
+# Plotting the results
+ggplot(top_economic_events, aes(x = reorder(EVTYPE, -TotalEconomicImpact), y = TotalEconomicImpact)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Top 10 Events with Greatest Economic Impact",
+       x = "Event Type",
+       y = "Total Economic Impact") +
+  coord_flip() # for horizontal bars
+
+```
